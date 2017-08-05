@@ -17,6 +17,8 @@ limitations under the License.
 #include "tensorflow/compiler/jit/xla_device.h"
 #include "tensorflow/compiler/jit/xla_device_ops.h"
 #include "tensorflow/compiler/tf2xla/xla_op_registry.h"
+#include "tensorflow/compiler/plugin/executor/platform_id.h"
+#include "tensorflow/compiler/xla/service/computation_placer.h"
 
 namespace tensorflow {
 
@@ -63,3 +65,15 @@ REGISTER_XLA_DEVICE_KERNELS(DEVICE_XLA_EXEC, kExecAllTypes);
 REGISTER_XLA_BACKEND(DEVICE_EXEC_XLA_JIT, kExecAllTypes, OpFilter);
 
 }  // namespace tensorflow
+
+static std::unique_ptr<xla::ComputationPlacer> CreateComputationPlacer() {
+  return xla::MakeUnique<xla::ComputationPlacer>();
+}
+
+static bool InitModule() {
+  xla::ComputationPlacer::RegisterComputationPlacer(
+      ::perftools::gputools::executorplugin::kExecutorPlatformId,
+      &CreateComputationPlacer);
+  return true;
+}
+static bool module_initialized = InitModule();
